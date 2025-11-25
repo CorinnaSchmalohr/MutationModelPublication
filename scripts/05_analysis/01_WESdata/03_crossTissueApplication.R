@@ -6,7 +6,7 @@ cr= "chr1"
 load("data/processedData/dataInfos.RData")
 dir.create("data/Modeling/exomeTrainData/CrossTissue", showWarnings = F)
 dir.create("fig/CrossTissue", showWarnings = F)
-plotEnding = "_20230902"
+plotEnding = "_20251124"
 colorRange = c(0.45,0.7) 
 
 
@@ -122,15 +122,24 @@ for(tissue in tissues){
 }
 ggplot(ROCs, aes(trainedOn, testedOn, fill= AUC)) +
   geom_tile() +
+  coord_equal() + # for square shapes
   scale_fill_viridis_c(limits=colorRange) +
   theme_minimal() +
-  theme(axis.text.x=element_text(angle = 46, vjust = 1, hjust = 1))+
+  theme(axis.text.x=element_text(angle = 46, vjust = 1, hjust = 1),
+        axis.text = element_text(size=20),
+        axis.title=element_text(size=20),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20),
+        legend.key.size = unit(25, "points"))+
   labs(y = "Tested on ", x = "Trained on") +  
-  scale_x_discrete(labels=t2T) + 
-  scale_y_discrete(labels = t2T)+
-  geom_text(aes(label = rank), color = "white", size = 2.5)
+  scale_x_discrete(labels= t2T) + 
+  scale_y_discrete(labels = t2T) +
+  geom_text(aes(label = rank), color = "white", size = 4)
 ggsave(filename=paste0("fig/CrossTissue/modelOnOtherTissues_AUCheatmap", plotEnding,".png"), 
-       width = 12, height = 12, units = "cm")
+       width = 10, height = 7)
+ggsave(filename=paste0("fig/CrossTissue/modelOnOtherTissues_AUCheatmap", plotEnding,".pdf"),
+       width = 10, height = 7)
+
 ggplot(ROCs, aes(trainedOn, testedOn, fill= AUC)) +
   geom_tile() +
   coord_equal() + # for square shapes
@@ -202,15 +211,23 @@ for(tissue in tissues){
 }
 ggplot(ROCs_subsampled, aes(trainedOn, testedOn, fill= AUC)) +
   geom_tile() +
+  coord_equal() + # for square shapes
   scale_fill_viridis_c(limits=colorRange) +
   theme_minimal() +
-  theme(axis.text.x=element_text(angle = 46, vjust = 1, hjust = 1))+
+  theme(axis.text.x=element_text(angle = 46, vjust = 1, hjust = 1),
+        axis.text = element_text(size=20),
+        axis.title=element_text(size=20),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20),
+        legend.key.size = unit(25, "points"))+
   labs(y = "Tested on ", x = "Trained on") +  
-  scale_x_discrete(labels=t2T) + 
-  scale_y_discrete(labels = t2T)+
-  geom_text(aes(label = rank), color = "white", size = 2.5)
+  scale_x_discrete(labels= t2T) + 
+  scale_y_discrete(labels = t2T) +
+  geom_text(aes(label = rank), color = "white", size = 4)
 ggsave(filename=paste0("fig/CrossTissue/modelOnOtherTissues_subsampled_AUCheatmap", plotEnding,".png"), 
-       width = 12, height = 12, units = "cm")
+       width = 10, height = 7)
+ggsave(filename=paste0("fig/CrossTissue/modelOnOtherTissues_subsampled_AUCheatmap", plotEnding,".pdf"), 
+       width = 10, height = 7)
 ggplot(ROCs_subsampled, aes(trainedOn, testedOn, fill= AUC)) +
   geom_tile() +
   coord_equal() + # for square shapes
@@ -345,16 +362,23 @@ for(tissue in tissues){
 }
 ggplot(RocsPreds, aes(y = TestedOn, x = TrainedOn, fill= AUC)) +
   geom_tile() +
+  coord_equal() + # for square shapes
   scale_fill_viridis_c(limits=colorRange) +
   theme_minimal() +
-  theme(axis.text.x=element_text(angle = 46, vjust = 1, hjust = 1))+
-  labs(y = "Test data predictors from this tissue", x = "Model trained on this tissue\n and test data positions from this tissue") +
-  scale_x_discrete(labels=t2T) + 
-  scale_y_discrete(labels = t2T)+
-  geom_text(aes(label = rankColumn), color = "white", size = 2.5)
-  # geom_text(aes(label = rankRow), color = "white", size = 2.5)
+  theme(axis.text.x=element_text(angle = 46, vjust = 1, hjust = 1),
+        axis.text = element_text(size=20),
+        axis.title=element_text(size=20),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20),
+        legend.key.size = unit(25, "points"))+
+  labs(y = "Test data predictors", x = "Model and test data positions") +
+  scale_x_discrete(labels= t2T) + 
+  scale_y_discrete(labels = t2T) +
+  geom_text(aes(label = rankColumn), color = "white", size = 4)
 ggsave(filename=paste0("fig/CrossTissue/CrossTissuePredsExchanged", plotEnding,".png"), 
-       width = 12, height = 12, units = "cm")
+       width = 10, height = 7)
+ggsave(filename=paste0("fig/CrossTissue/CrossTissuePredsExchanged", plotEnding,".pdf"), 
+       width = 10, height = 7)
 ggplot(RocsPreds, aes(y = TestedOn, x = TrainedOn, fill= AUC)) +
   geom_tile() +
   coord_equal() + # for square shapes
@@ -390,15 +414,23 @@ for(tissue in tissues){
 }
 ggplot(RocsMuts, aes(y = testedOn, x = trainedOn, fill= AUC)) +
   geom_tile() +
+  coord_equal() + # for square shapes
   scale_fill_viridis_c(limits=colorRange) +
   theme_minimal() +
-  theme(axis.text.x=element_text(angle = 46, vjust = 1, hjust = 1))+
-  labs(y = "Test data mutations from this tissue", x = "Model trained on this tissue\n and test data predictors from this tissue") + 
-  scale_x_discrete(labels=t2T) + 
+  theme(axis.text.x=element_text(angle = 46, vjust = 1, hjust = 1),
+        axis.text = element_text(size=20),
+        axis.title=element_text(size=20),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20),
+        legend.key.size = unit(25, "points"))+
+  labs(y = "Test data mutations", x = "Model and test data predictors") + 
+  scale_x_discrete(labels= t2T) + 
   scale_y_discrete(labels = t2T)+
-  geom_text(aes(label = rank), color = "white", size = 2.5)
+  geom_text(aes(label = rank), color = "white", size = 4)
 ggsave(filename=paste0("fig/CrossTissue/CrossTissueMutsExchanged", plotEnding,".png"), 
-       width = 12, height = 12, units = "cm")
+       width = 10, height = 7)
+ggsave(filename=paste0("fig/CrossTissue/CrossTissueMutsExchanged", plotEnding,".pdf"), 
+       width = 10, height = 7)
 ggplot(RocsMuts, aes(y = testedOn, x = trainedOn, fill= AUC)) +
   geom_tile() +
   coord_equal() + # for square shapes

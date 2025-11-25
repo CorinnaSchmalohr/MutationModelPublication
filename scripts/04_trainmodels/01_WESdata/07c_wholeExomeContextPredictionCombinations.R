@@ -49,12 +49,12 @@ dumpVar = sapply(tissues, function(tissue){
     load(paste0("data/MutTables/SomamutDB/", capitalize(tissue), "_WES.RData")) #Muts, meta
     tempPos = paste(Muts$chr, Muts$pos, sep = "_")
     data$healthyMuts = as.integer(dataPos %in% tempPos)
+    rm(Muts, meta)
   } else
     data$healthyMuts = NA
   
   
-  rm(meta, dataPos, Muts, tempPos); gc()
-  
+  rm(dataPos, tempPos); gc()
   # create simple combinations: multiply, mean, combOdds
   data$mult = data$RFpreds * data$contextPreds
   data$mean = (data$RFpreds + data$contextPreds)/2

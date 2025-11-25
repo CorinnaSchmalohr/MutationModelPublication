@@ -1,0 +1,67 @@
+#!/bin/bash -l
+#SBATCH --job-name=genome_process
+#SBATCH --cpus-per-task=4       # Adjust based on your needs
+#SBATCH --account=ypaul1
+#SBATCH --output=./tmp/output/genomeRF_o-%A_%a.txt  # Log per task
+#SBATCH --error=./tmp/output/genomeRF_e-%A_%a.txt
+#SBATCH --array=1-22            # 22 tasks for chr1-chr22
+#SBATCH --mem=100G               # Adjust based on chromosome size
+#SBATCH --time=34:00:00
+
+# ----------------------------------------------------------------------
+# Step 1: Run R script to generate BED files (chromosome-specific)
+# ----------------------------------------------------------------------
+echo "Starting R script for chr${SLURM_ARRAY_TASK_ID}"
+
+
+
+# Initialize conda
+source ~/.bashrc  # Or your conda init file
+source $(conda info --base)/etc/profile.d/conda.sh
+conda activate R
+
+# Run first R script
+echo "Starting Rscript1"
+Rscript --vanilla --verbose 'script/02_prepareMutations/02_WGSdata/03a_wholeGenomePositionsRevised.R' ${SLURM_ARRAY_TASK_ID}
+echo "R script completed for chr${SLURM_ARRAY_TASK_ID}"
+
+
+# ----------------------------------------------------------------------
+# Step 2: Run bedtools on the generated BED file
+# ----------------------------------------------------------------------
+echo "Starting bedtools for chr${SLURM_ARRAY_TASK_ID}"
+
+
+# Bedtools processing
+BEDTOOLS="/home/ypaul1/my-envs/R/bin/bedtools"
+GENOME="data/rawdata/genome/GRCh37.primary_assembly.genome.fa"
+INPUT_BED="data/MutTables/WholeGenomeData/temp/TPs_bed_chr${SLURM_ARRAY_TASK_ID}.bed"
+OUTPUT_CMD="data/MutTables/WholeGenomeData/temp/cmd_chr${SLURM_ARRAY_TASK_ID}"
+
+# Run bedtools
+"$BEDTOOLS" getfasta \
+  -fi "$GENOME" \
+  -bed "$INPUT_BED" \
+  -name -tab | cut -f 2 > "$OUTPUT_CMD"
+
+echo "bedtools completed for chr${SLURM_ARRAY_TASK_ID}. Output: $OUTPUT_CMD"
+
+
+# ----------------------------------------------------------------------
+# Step 3: Final R processing (per-chromosome)
+# ----------------------------------------------------------------------
+echo "Step 3: Running final R script..."
+
+MUTS="data/MutTables/WholeGenomeData/temp/Muts1_bed_chr${SLURM_ARRAY_TASK_ID}.bed"
+RSCRIPT_FINAL="scripts/02_prepareMutations/02_WGSdata/03b_wholeGenomePositionsRevised.R"
+#OUTPUT_MUTS="/cellfile/datapublic/ypaul1/Mutations/results/GenomePredictions/MutTables/WholeGenomeData/MutsResult_chr${SLURM_ARRAY_TASK_ID}.bed"  # Save as RDS for efficiency
+
+Rscript --vanilla "$RSCRIPT_FINAL" \
+  --chrom "chr${SLURM_ARRAY_TASK_ID}" \
+  --bed "$MUTS" \
+  --cmd "$OUTPUT_CMD"
+
+echo "=== chr${SLURM_ARRAY_TASK_ID} pipeline complete ==="
+
+
+

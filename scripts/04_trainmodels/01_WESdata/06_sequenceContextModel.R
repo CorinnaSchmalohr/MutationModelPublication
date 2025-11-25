@@ -60,4 +60,14 @@ pPerChr = sapply(tissues, function(tissue){
 save(pPerChr, file = "data/Modeling/exomeTrainData/contextModel/context_pPerChr.RData")
 ######
 
-
+# generate supplementary table #####
+data = lapply(tissues, function(tissue){
+  subdat = pPerChr[[tissue]]
+  subdat = subdat[c("obs", "chrProb")]
+  colnames(subdat) = paste(c("nMutations", "prob"), tissue, sep = "_")
+  return(subdat)
+})
+data = cbind(pPerChr[[1]][,c("chr", "fivemers", "chrFreq")], 
+             do.call(cbind,data))
+write.table(data, file = "data/processedData/contextPredictorExome.csv", row.names = F)
+#####

@@ -22,9 +22,30 @@ lightCol = function(x,alpha){
   rgb(red=x[1,], green=x[2,], blue=x[3,], alpha=alpha, maxColorValue=255)
 }
 dir.create("fig/healthyTissuesWEX", showWarnings = F)
-plotEnding = "_20250219"
+plotEnding = "_20251124"
 source("lib/general_function.R")
 #####
+
+# number of mutations #####
+nMuts = sapply(WEStissues, function(tissue){
+  print(tissue)
+  # load healthy tissue trainingData
+  load(paste0("data/MutTables/SomamutDB/",
+              tissue, "_WES_mapped_processed.RData")) #dat,datchroms
+  return(sum(dat$mutated == 1))
+})  
+sum(nMuts)
+tissues2Remove = names(which(nMuts<100))
+png(paste0("fig/healthyTissuesWEX/nMuts", plotEnding, ".png"),
+    width = 1000, height = 1000, pointsize = 20)
+par(mar = c(4,10,1,1))
+barplot(rev(nMuts), horiz = T, las = 1, xlab = "n Mutations",
+        border = (names(rev(nMuts)) %in% tissues2Remove)+1)
+abline(v = 100)
+dev.off()
+sum(nMuts[!names(nMuts) %in% tissues2Remove])
+#####
+
 
 # tissue-specific models #####
 perfsTissueSpecific = sapply(modelTissues, function(tissue){
@@ -167,32 +188,59 @@ dev.off()
 
 # AUC general model
 pdfAndPng(file = paste0("fig/healthyTissuesWEX/AUC", plotEnding), width = 4, 
-          height = 8, pngArgs = list(pointsize=15), pdfArgs = list(pointsize=12),
+          height = 10, pngArgs = list(pointsize=15), pdfArgs = list(pointsize=12),
           expr = expression({
             AUCs = rbind("General" = sapply(perfsAllTissueModel, function(x)x$auc@y.values[[1]]),
                          "Tissue-specific" = sapply(perfsTissueSpecific, function(x)x$auc@y.values[[1]])[tolower(WEStissues)])
             par(mar = c(3,7,3,0.5))
             AUCs = AUCs[,ncol(AUCs):1]
-            axisbuffer = 0.02
             offset = 0.4
             AUCs[is.na(AUCs)] = offset
+            AUCs = AUCs[,!colnames(AUCs) %in% tissues2Remove]
             temp = barplot(AUCs-offset, 
                            beside = T, horiz = T, las = 1, legend.text = F, 
                            col = rbind("grey20",  tissueCols[tolower(colnames(AUCs))]), 
                            density = c(NA, 40),border = T,
-                           names.arg = sapply((colnames(AUCs)), capitalize), xaxt = "n", mgp = c(2,0.4,0))
+                           names.arg = sapply((colnames(AUCs)), capitalize), xaxt = "n", mgp = c(1.9,0.4,0))
             
             abline(v=0.5-offset, lty = 2)
             tickPos =axTicks(1)
             axis(1,at = tickPos, labels = c(0,tickPos[-1]+offset))
-            axis.break(axis = 1, breakpos = 0.01, style = "gap", bgcol = "grey")
+            axis.break(axis = 1, breakpos = 0.01, style = "gap") #, bgcol = "grey"
             abline(v=0)
             axis(2, at = colMeans(temp), labels = rep("", ncol(temp)),lwd = 0, lwd.ticks = 1, pos = 0, tck=-0.02)
+            title(xlab = "AUC", mgp = c(1.8,0,0))
             legend(x = par()$usr[1], y = max(temp)*1.05, xjust = 0.3, yjust = 0,xpd = NA, ncol = 2, 
-                   legend = c("Tissue-specific", "General model"), 
+                   legend = c("Tissue-specific model", "Universal all-tissue model"), 
                    fill = c("grey20", "grey20"), density = c(40, NA))
           }))
-
+pdfAndPng(file = paste0("fig/healthyTissuesWEX/AUC_vertical", plotEnding), width = 10, 
+          height = 4, pngArgs = list(pointsize=15), pdfArgs = list(pointsize=12),
+          expr = expression({
+            AUCs = rbind("General" = sapply(perfsAllTissueModel, function(x)x$auc@y.values[[1]]),
+                         "Tissue-specific" = sapply(perfsTissueSpecific, function(x)x$auc@y.values[[1]])[tolower(WEStissues)])
+            par(mar = c(7,4,4,0.5))
+            # AUCs = AUCs[,ncol(AUCs):1]
+            offset = 0.4
+            AUCs[is.na(AUCs)] = offset
+            AUCs = AUCs[,!colnames(AUCs) %in% tissues2Remove]
+            
+            temp = barplot(AUCs-offset, 
+                           beside = T,  las = 2, legend.text = F, 
+                           col = rbind("grey20",  tissueCols[tolower(colnames(AUCs))]), 
+                           density = c(40,NA),border = T,
+                           names.arg = sapply((colnames(AUCs)), capitalize), yaxt = "n", mgp = c(1.9,0.4,0))
+            abline(h=0.5-offset, lty = 2)
+            tickPos =axTicks(2)
+            axis(2,at = tickPos, labels = c(0,tickPos[-1]+offset), las = 1)
+            axis.break(axis =2, breakpos = mean(tickPos[1:2]), style = "gap") #, bgcol = "grey"
+            abline(h=0)
+            axis(1, at = colMeans(temp), labels = rep("", ncol(temp)),lwd = 0, lwd.ticks = 1, pos = 0, tck=-0.02)
+            title(ylab = "AUC", mgp = c(2,0,0))
+            legend(x = 0, y = 0.675-offset, xpd = NA,
+                   legend = c("Universal all-tissue model", "Tissue-specific model"), 
+                   fill = c("grey20", "grey20"), density = c( 40, NA))
+          }))
 
 # AUCs vs nMuts
 nMutsHealthy = sapply(WEStissues, function(tissue){

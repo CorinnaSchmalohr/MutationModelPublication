@@ -3,8 +3,7 @@ load("data/processedData/pentamers.RData")
 rownames(fivemers) = pent2context[fivemers[,1]]
 # only once: go through all possible pentamers. use emboss to get pentamer positions #####
 dir.create("data/processedData/pentLocations/", showWarnings=F)
-# TODO filter for callable regions
-load("data/predictors/wgEncodeDacMapabilityConsensusExcludable.RData")
+load("data/predictors/wgEncodeDacMapabilityConsensusExcludable.RData") #gr
 library(parallel)
 cl <- makeCluster(8, type="FORK")
 start_time <- Sys.time()
@@ -18,7 +17,7 @@ dumpVar = parSapply(cl=cl, X=names(pent2context), FUN=function(pent){
   temp = read.table(paste0("temp/", pent, ".gff"))
   pentLoc = GRanges(seqnames=temp$V1, 
                     ranges=IRanges(start=temp$V4, end=temp$V5))
-  # pentLoc = setdiff(x = pentLoc, y = gr)
+  # filter for callable regions
   pentLoc = subtract(x = pentLoc, y = gr, ignore.strand = T)
   pentLoc = unlist(pentLoc)
   pentLoc = pentLoc[width(pentLoc) == 5]

@@ -179,117 +179,117 @@ WGStissues = sort(unique(dat$Tissue[dat$WGS]))
 save(WGStissues, file = "data/MutTables/SomamutDB/WGStissues.RData")
 
 # # WES data #####
-# WESdat = dat[dat$WES,]
-# # load sequences for TN generation
-# exonSeqs = read.table("data/processedData/codExons_noUTR_filtered.withsequences.bed")
-# load("data/processedData/codExons_noUTR_filtered.RData") # codExons_filtered
-# codExons_filtered = GRanges(codExons_filtered)
-# 
-# # in this file, covered regions are extended by two bases in
-# # both direction, in order to be able to find the 5mers.
-# colnames(exonSeqs) = c("chr", "start", "end", "id","sequence")
-# exonSeqs = exonSeqs[exonSeqs$chr %in% chrs,]
-# # for each tissue
-# set.seed(53634)
-# dumpVar = sapply(sort(unique(WESdat$Tissue)), function(tissue){ 
-#   print(tissue)
-#   TPs = WESdat[WESdat$Tissue == tissue,]
-# 
-#   # store mutations to exclude during TN generation
-#   posToFilter = paste(TPs$chr, TPs$pos, sep = "_")
-# 
-#   # exclude positions that were mutated more than once
-#   dupl = duplicated(posToFilter)
-#   TPs = TPs[!dupl,]
-# 
-# 
-#   # subset to exome regions
-#   TPsGR = GRanges(seqnames= TPs$chr,
-#                   ranges=IRanges(start = TPs$pos,
-#                                  end=TPs$pos))
-#   ov = !is.na(findOverlaps(query=TPsGR, subject=codExons_filtered, select = "first"))
-#   # print(table(ov))
-#   TPs = TPs[ov,]
-# 
-# 
-#   # Get TNs
-#   TNs = lapply(chrs, function(chr){
-#     # cat(chr,' ')
-#     # subset data to chromosome
-#     TPs_chr = TPs[TPs$chr == chr,]
-#     exonSeqs_chr = exonSeqs[exonSeqs$chr == chr,]
-#     pents = TPs_chr$context
-#     TNs_chr = lapply(unique(pent2context[pents]), function(pent){
-#       # cat(pent, ' ')
-#       pent2search = fivemers[pent,]
-#       nmatch1 = str_count(string = exonSeqs_chr$sequence, pattern = pent2search[1])
-#       nmatch2 = str_count(string = exonSeqs_chr$sequence, pattern = pent2search[2])
-#       nmatch = nmatch1 + nmatch2
-#       weights = nmatch/sum(nmatch)
-#       toRm = rep(1,sum(pents %in% pent2search))
-#       pos = NULL
-#       while(length(toRm) > 0){
-#         TNs_sample = sample(1:nrow(exonSeqs_chr),
-#                             size = length(toRm),
-#                             prob = weights, replace = T)
-#         new = t(sapply(TNs_sample, function(i){
-#           # cat(i,' ')
-#           gene = unlist(exonSeqs_chr[i,])
-#           matches1 = cbind(gregexpr(pattern = pent2search[1], text = gene["sequence"])[[1]],pent2search[1])
-#           matches2 = cbind(gregexpr(pattern = pent2search[2], text = gene["sequence"])[[1]],pent2search[2])
-#           matches = rbind(matches1, matches2)
-#           matches = matches[matches[,1] != "-1",, drop = F]
-#           if(nrow(matches) == 1){
-#             sampMatch = matches[1,]
-#           } else{
-#             sampMatch = matches[sample(1:nrow(matches),size = 1),]
-#           }
-#           samp = as.integer(sampMatch[1])
-#           c(gene["chr"],
-#             pos = (as.numeric(gene["start"]) + samp +2),
-#             ref = substr(gene["sequence"],start = samp+2, stop = samp+2),
-#             context = sampMatch[2])
-#         }))
-#         pos = rbind(pos,new)
-#         temp = paste(pos[,"chr"], pos[,"pos"], sep = "_")
-#         #  make sure that none of the positions are actually overlapping with existing positions:
-#         toRm = which(temp %in% posToFilter | duplicated(temp))
-#         if(length(toRm) > 0){
-#           pos = pos[-toRm,]
-#         }
-#       }
-#       return(pos)
-#     })
-#     TNs_chr = do.call(rbind,TNs_chr)
-#   })
-#   TNs = do.call(rbind,TNs)
-#   TNs = as.data.frame(TNs)
-#   TNs$pos = as.integer(TNs$pos)
-#   colnames(TNs) = c("chr", "pos", "ref", "context")
-# 
-#   # save (also save meta information of TPs)
-#   # save
-#   TNs$alt = NA
-#   TNs$mutated = 0
-#   TPs$mutated = 1
-#   meta = TPs
-#   rownames(meta) = paste0(TPs$chr, "_", TPs$pos)
-#   Muts = rbind(TPs[,c("chr", "pos", "ref", "alt", "context", "mutated")],
-#                TNs[,c("chr", "pos", "ref", "alt", "context", "mutated")])
-#   Muts = Muts[order(Muts[,1], Muts[,2]),]
-#   ids = do.call(paste,c(Muts, sep = "_"))
-#   MutsBed = cbind(Muts[,1], as.integer(Muts[,2]-1), as.integer(Muts[,2]),
-#                   ids)
-#   save(Muts, meta, file = paste0("data/MutTables/SomamutDB/", tissue, "_WES.RData"))
-# 
-#   ids = do.call(paste,c(Muts, sep = "_"))
-#   MutsBed = cbind(Muts[,1], as.integer(Muts[,2]-1), as.integer(Muts[,2]),
-#                   ids)
-#   write.table(MutsBed, file = paste0("data/MutTables/SomamutDB/", tissue, "_WES.bed"),
-#               col.names = F, row.names = F, sep = "\t", quote = F)
-#   return(NULL)
-# })
-# 
+WESdat = dat[dat$WES,]
+# load sequences for TN generation
+exonSeqs = read.table("data/processedData/codExons_noUTR_filtered.withsequences.bed")
+load("data/processedData/codExons_noUTR_filtered.RData") # codExons_filtered
+codExons_filtered = GRanges(codExons_filtered)
+
+# in this file, covered regions are extended by two bases in
+# both direction, in order to be able to find the 5mers.
+colnames(exonSeqs) = c("chr", "start", "end", "id","sequence")
+exonSeqs = exonSeqs[exonSeqs$chr %in% chrs,]
+# for each tissue
+set.seed(53634)
+dumpVar = sapply(sort(unique(WESdat$Tissue)), function(tissue){
+  print(tissue)
+  TPs = WESdat[WESdat$Tissue == tissue,]
+
+  # store mutations to exclude during TN generation
+  posToFilter = paste(TPs$chr, TPs$pos, sep = "_")
+
+  # exclude positions that were mutated more than once
+  dupl = duplicated(posToFilter)
+  TPs = TPs[!dupl,]
+
+
+  # subset to exome regions
+  TPsGR = GRanges(seqnames= TPs$chr,
+                  ranges=IRanges(start = TPs$pos,
+                                 end=TPs$pos))
+  ov = !is.na(findOverlaps(query=TPsGR, subject=codExons_filtered, select = "first"))
+  # print(table(ov))
+  TPs = TPs[ov,]
+
+
+  # Get TNs
+  TNs = lapply(chrs, function(chr){
+    # cat(chr,' ')
+    # subset data to chromosome
+    TPs_chr = TPs[TPs$chr == chr,]
+    exonSeqs_chr = exonSeqs[exonSeqs$chr == chr,]
+    pents = TPs_chr$context
+    TNs_chr = lapply(unique(pent2context[pents]), function(pent){
+      # cat(pent, ' ')
+      pent2search = fivemers[pent,]
+      nmatch1 = str_count(string = exonSeqs_chr$sequence, pattern = pent2search[1])
+      nmatch2 = str_count(string = exonSeqs_chr$sequence, pattern = pent2search[2])
+      nmatch = nmatch1 + nmatch2
+      weights = nmatch/sum(nmatch)
+      toRm = rep(1,sum(pents %in% pent2search))
+      pos = NULL
+      while(length(toRm) > 0){
+        TNs_sample = sample(1:nrow(exonSeqs_chr),
+                            size = length(toRm),
+                            prob = weights, replace = T)
+        new = t(sapply(TNs_sample, function(i){
+          # cat(i,' ')
+          gene = unlist(exonSeqs_chr[i,])
+          matches1 = cbind(gregexpr(pattern = pent2search[1], text = gene["sequence"])[[1]],pent2search[1])
+          matches2 = cbind(gregexpr(pattern = pent2search[2], text = gene["sequence"])[[1]],pent2search[2])
+          matches = rbind(matches1, matches2)
+          matches = matches[matches[,1] != "-1",, drop = F]
+          if(nrow(matches) == 1){
+            sampMatch = matches[1,]
+          } else{
+            sampMatch = matches[sample(1:nrow(matches),size = 1),]
+          }
+          samp = as.integer(sampMatch[1])
+          c(gene["chr"],
+            pos = (as.numeric(gene["start"]) + samp +2),
+            ref = substr(gene["sequence"],start = samp+2, stop = samp+2),
+            context = sampMatch[2])
+        }))
+        pos = rbind(pos,new)
+        temp = paste(pos[,"chr"], pos[,"pos"], sep = "_")
+        #  make sure that none of the positions are actually overlapping with existing positions:
+        toRm = which(temp %in% posToFilter | duplicated(temp))
+        if(length(toRm) > 0){
+          pos = pos[-toRm,]
+        }
+      }
+      return(pos)
+    })
+    TNs_chr = do.call(rbind,TNs_chr)
+  })
+  TNs = do.call(rbind,TNs)
+  TNs = as.data.frame(TNs)
+  TNs$pos = as.integer(TNs$pos)
+  colnames(TNs) = c("chr", "pos", "ref", "context")
+
+  # save (also save meta information of TPs)
+  # save
+  TNs$alt = NA
+  TNs$mutated = 0
+  TPs$mutated = 1
+  meta = TPs
+  rownames(meta) = paste0(TPs$chr, "_", TPs$pos)
+  Muts = rbind(TPs[,c("chr", "pos", "ref", "alt", "context", "mutated")],
+               TNs[,c("chr", "pos", "ref", "alt", "context", "mutated")])
+  Muts = Muts[order(Muts[,1], Muts[,2]),]
+  ids = do.call(paste,c(Muts, sep = "_"))
+  MutsBed = cbind(Muts[,1], as.integer(Muts[,2]-1), as.integer(Muts[,2]),
+                  ids)
+  save(Muts, meta, file = paste0("data/MutTables/SomamutDB/", tissue, "_WES.RData"))
+
+  ids = do.call(paste,c(Muts, sep = "_"))
+  MutsBed = cbind(Muts[,1], as.integer(Muts[,2]-1), as.integer(Muts[,2]),
+                  ids)
+  write.table(MutsBed, file = paste0("data/MutTables/SomamutDB/", tissue, "_WES.bed"),
+              col.names = F, row.names = F, sep = "\t", quote = F)
+  return(NULL)
+})
+
 # #####
 
 

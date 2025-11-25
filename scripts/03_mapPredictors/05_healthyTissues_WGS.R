@@ -1,11 +1,6 @@
 args = as.numeric(commandArgs(trailingOnly=T))
-tissues =c("adipocytes", "adrenal_gland", "bladder", 
-           "bonemarrow", "brain", "breast", "colon", 
-           "esophagus", "fibroblast", "heart",  "kidney",
-           "liver", "lung", "pancreas", "placenta", "prostate", "rectum", 
-           "skeletal_muscle", "skin", "small_intestine", "spleen", 
-           "stomach", "testicle", "thyroid", "tonsil", "ureter") #"iPSC","blood", "embryonic_stem_cell", "endometrium"(has only indels)
-tissue = tissues[args]
+load("data/MutTables/SomamutDB/WGStissues.RData")
+tissue = WGStissues[args]
 .libPaths(new = "/data/public/cschmalo/R-4.1.2/")
 source("lib/dataMapping.R")
 library(readxl)
@@ -24,8 +19,8 @@ if(tissue %in% colnames(tab)){
   tab = tab[,c(colnames(tab)[1:9],tissue)]
   tab = tab[!is.na(tab[,tissue]),]
 } else{
-  tab = tab[,c(colnames(tab)[1:9],"allTissues")]
-  tab = tab[!is.na(tab[,"allTissues"]),]
+  tab = tab[,c(colnames(tab)[1:9],"colon")]# colon has the most complete data
+  tab = tab[!is.na(tab[,"colon"]),]
 }
 # for predictors where we want multiple ranges, expand table
 tab = apply(tab,1,function(x){
@@ -48,15 +43,14 @@ tab = apply(tab,1,function(x){
 tab = do.call(rbind, tab)
 tab = as.data.frame(tab)
 pred = mapPredictors(x=tab, 
-                     posFile=paste0("data/MutTables/healthyTissuesWGS/", 
-                                    tissue, "_SomaMutDB.bed"))
-load(paste0("data/MutTables/healthyTissuesWGS/", tissue, "_SomaMutDB.RData"))
+                     posFile=paste0("data/MutTables/SomamutDB/", tissue, "_WGS.bed"))
+load(paste0("data/MutTables/SomamutDB/", tissue, "_WGS.RData"))
 data = list(meta = tab, pred = pred, muts = Muts)
-save(data, file = paste0("data/MutTables/healthyTissuesWGS/", tissue, "_Muts_mapped.RData"))
+save(data, file = paste0("data/MutTables/SomamutDB/", tissue, "_WGS_mapped.RData"))
 
 dat = cbind(data$pred, mutated = as.factor(data$muts$mutated))
 datchroms = data$muts$chr
 dat = as.data.frame(dat)
-save(dat,datchroms, file=paste0("data/MutTables/healthyTissuesWGS/", 
-                                tissue, "_Muts_mapped_processed.RData"))
+save(dat,datchroms, file=paste0("data/MutTables/SomamutDB/", 
+                                tissue, "_WGS_mapped_processed.RData"))
 cat("\n")

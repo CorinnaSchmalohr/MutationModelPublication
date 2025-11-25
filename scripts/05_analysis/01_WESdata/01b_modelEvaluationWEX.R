@@ -6,12 +6,12 @@ library(berryFunctions) # for smallPlot
 library(corrplot)
 library(sinaplot)
 library(RColorBrewer)
-library(plotrix) # for point labels
+library(plotrix) # for point labels and axis break
 library(readxl)
 source("lib/general_function.R")
 source("scripts/05_analysis/00_NamesAndColors.R")
 dir.create("fig/modelEvaluation", showWarnings=F)
-plotEnding = "_20230620"
+plotEnding = "_20251124"
 
 # load data #####
 load("data/processedData/dataInfos.RData")
@@ -392,17 +392,40 @@ AUCcollection = sapply(tissues, function(tissue){
     GLM = ROC_PR_glm_concat_sig[[tissue]]$auc@y.values[[1]],
     SL = ROC_PR_lasso_concat[[tissue]]$auc@y.values[[1]])
 })
-png(paste0("fig/modelEvaluation/AUCbetweenMethods_allTissues",
-           plotEnding, ".png"), width = 1200, height = 500, pointsize = 20)
-par(mar = c(3,4,1,4))
-temp = barplot(AUCcollection-0.5, beside = T, las = 1, ylab = "AUC",
-        col = methodCols, axisnames = F, yaxt = "n")
-axis(2, at = axTicks(2), labels = axTicks(2)+0.5, las = 1)
-title(ylab = "AUC")
-legend(x = 41, y=mean(AUCcollection)-0.5, legend = names(methodCols), 
-       fill = methodCols, xpd = NA, bty = "n")
-mtext(t2T[tissues], side = 1, at = temp[2,])
-dev.off()
+# horizontal version:
+pdfAndPng(file = paste0("fig/modelEvaluation/AUCbetweenMethods_allTissues_horiz",
+                        plotEnding), 
+          width = 8, height = 8, pngArgs = list(pointsize = 25), 
+          expr = expr({
+            par(mar = c(3,5,1,2))
+            offset = 0.5
+            plotDat = AUCcollection[rev(rownames(AUCcollection)),rev(colnames(AUCcollection))]
+            temp = barplot(plotDat-offset, beside = T, las = 1, 
+                           col = methodCols[rownames(plotDat)], axisnames = F, xaxt = "n", horiz = T)
+            tickPos = axTicks(1)
+            axis(1, at = tickPos, labels = c(0,tickPos[-1]+offset), las = 1)
+            axis.break(axis = 1, breakpos = mean(tickPos[1:2]))
+            title(xlab = "AUC", mgp = c(2,1,0))
+            legend(x = "topright", legend = names(methodCols), 
+                   fill = methodCols, xpd = NA, bty = "n", inset = 0.04)
+            mtext(t2T[colnames(plotDat)], side = 2, at = temp[2,], las = 1)
+          }))
+# original version
+pdfAndPng(file = paste0("fig/modelEvaluation/AUCbetweenMethods_allTissues",
+                        plotEnding), 
+          width = 12, height = 8, pngArgs = list(pointsize = 25), 
+          expr = expr({
+            par(mar = c(3,4,1,4))
+            offset = 0.5
+            temp = barplot(AUCcollection-offset, beside = T, las = 1, ylab = "AUC",
+                           col = methodCols, axisnames = F, yaxt = "n")
+            axis(2, at = axTicks(2), labels = c(0,axTicks(2)[-1]+offset), las = 1)
+            axis.break(axis = 2, breakpos = mean(axTicks(2)[1:2]))
+            title(ylab = "AUC")
+            legend(x = "topleft", legend = names(methodCols), 
+                   fill = methodCols, xpd = NA, bty = "n", inset = 0.04)
+            mtext(t2T[tissues], side = 1, at = temp[2,])
+          }))
 #####
 
 # Train vs. test performance of RF, GLM and LASSO #####

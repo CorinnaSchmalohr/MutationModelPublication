@@ -51,3 +51,17 @@ dumpVar = sapply(1:50, function(i){
               col.names = F, row.names = F, sep = "\t", quote = F)
 })
 #####
+
+
+
+# create binned version of exome #####
+codExonsGR = GRanges(codExons_filtered)
+codExonsGR_merged <- reduce(codExonsGR)
+bins100 = slidingWindows(codExonsGR_merged, width = 100, step = 100)
+bins100 = unlist(bins100)
+bins1kb = slidingWindows(codExonsGR_merged, width = 1000, step = 1000)
+bins1kb = unlist(bins1kb)
+hist(width(bins100))
+hist(width(bins1kb))
+save(bins100, bins1kb, file = "data/processedData/exomeBins.RData")
+#####

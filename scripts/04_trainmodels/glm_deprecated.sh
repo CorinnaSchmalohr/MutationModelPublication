@@ -1,9 +1,0 @@
-# #!/bin/bash -l
-# #SBATCH --account=cschmal1
-# #SBATCH --mail-type=END,FAIL,REQUEUE
-# #SBATCH --mail-use=cschmal1@uni-koeln.de
-# #SBATCH --output=output/glm_o-%j
-# #SBATCH --error=output/glm_e-%j
-# #SBATCH --array=1-10
-# 
-# Rscript --vanilla --verbose 'scripts/05_trainmodels/glm.R' ${SLURM_ARRAY_TASK_ID}

@@ -1,20 +1,12 @@
 args = as.numeric(commandArgs(trailingOnly=T))
-tissues =c("adipocytes", "adrenal_gland", "bladder", 
-           "bonemarrow", "brain", "breast", "colon", 
-           "esophagus", "fibroblast", "heart",  "kidney",
-           "liver", "lung", "pancreas", "placenta", "prostate", "rectum", 
-           "skeletal_muscle", "skin", "small_intestine", "spleen", 
-           "stomach", "testicle", "thyroid", "tonsil", "ureter") #"iPSC","blood", "embryonic_stem_cell", "endometrium"(has only indels)
-tissue = tissues[args]
+load("data/MutTables/SomamutDB/WEStissues.RData") #WEStissues
+tissue = WEStissues[args]
 .libPaths(new = "/data/public/cschmalo/R-4.1.2/")
 source("lib/dataMapping.R")
 library(readxl)
 ranges = c("1Mb" = 500000, "100kb" = 50000,"10kb" = 5000, 
            "1kb" = 500, "100bp" = 50, "10bp" = 5, "1bp" = 0)
 print(tissue)
-# tissueSpecific = c("brain","breast", "colon","esophagus", 
-#                    "kidney", "liver", "lung","ovary", 
-#                    "prostate", "skin") 
 
 # for each tissue, prepare corresponding mapping table
 print("mapping data")
@@ -27,8 +19,8 @@ if(tissue %in% colnames(tab)){
   tab = tab[,c(colnames(tab)[1:9],tissue)]
   tab = tab[!is.na(tab[,tissue]),]
 } else{
-  tab = tab[,c(colnames(tab)[1:9],"lung")]
-  tab = tab[!is.na(tab[,"lung"]),]
+  tab = tab[,c(colnames(tab)[1:9],"colon")] # colon has the most complete data
+  tab = tab[!is.na(tab[,"colon"]),]
 }
 # for predictors where we want multiple ranges, expand table
 tab = apply(tab,1,function(x){
@@ -54,15 +46,14 @@ tab = as.data.frame(tab)
 
 # now map predictors
 pred = mapPredictors(x=tab, 
-                     posFile=paste0("data/MutTables/healthyTissuesWEX/", 
-                                    tissue, "_SomaMutDB.bed"))
-load(paste0("data/MutTables/healthyTissuesWEX/", tissue, "_SomaMutDB.RData"))
+                     posFile=paste0("data/MutTables/SomamutDB/", tissue, "_WES.bed"))
+load(paste0("data/MutTables/SomamutDB/", tissue, "_WES.RData"))
 data = list(meta = tab, pred = pred, muts = Muts)
-save(data, file = paste0("data/MutTables/healthyTissuesWEX/", tissue, "_Muts_mapped.RData"))
+save(data, file = paste0(paste0("data/MutTables/SomamutDB/", tissue, "_WES_mapped.RData")))
 
 dat = cbind(data$pred, mutated = as.factor(data$muts$mutated))
 datchroms = data$muts$chr
 dat = as.data.frame(dat)
-save(dat,datchroms, file=paste0("data/MutTables/healthyTissuesWEX/", 
-                                tissue, "_Muts_mapped_processed.RData"))
+save(dat,datchroms, file=paste0("data/MutTables/SomamutDB/",
+                                       tissue, "_WES_mapped_processed.RData"))
 cat("\n")
